@@ -1,0 +1,69 @@
+//=============================< Functions: Android.Contacts >=============================
+public class Android_Contact {
+//----------------< fritzbox_Contacts() >----------------
+public String android_contact_Name = "";
+public String android_contact_TelefonNr = "";
+public int android_contact_ID=0;
+//----------------</ fritzbox_Contacts() >----------------
+}
+
+public void fp_get_Android_Contacts() {
+//----------------< fp_get_Android_Contacts() >----------------
+ArrayList<Android_Contact> arrayList_Android_Contacts = new ArrayList<Android_Contact>();
+
+//--< get all Contacts >--
+Cursor cursor_Android_Contacts = null;
+ContentResolver contentResolver = getContentResolver();
+try {
+cursor_Android_Contacts = contentResolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+} catch (Exception ex) {
+Log.e("Error on contact", ex.getMessage());
+}
+//--</ get all Contacts >--
+
+//----< Check: hasContacts >----
+if (cursor_Android_Contacts.getCount() > 0) {
+//----< has Contacts >----
+//----< @Loop: all Contacts >----
+while (cursor_Android_Contacts.moveToNext()) {
+//< init >
+Android_Contact android_contact = new Android_Contact();
+String contact_id = cursor_Android_Contacts.getString(cursor_Android_Contacts.getColumnIndex(ContactsContract.Contacts._ID));
+String contact_display_name = cursor_Android_Contacts.getString(cursor_Android_Contacts.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+//</ init >
+
+//----< set >----
+android_contact.android_contact_Name = contact_display_name;
+
+
+//----< get phone number >----
+int hasPhoneNumber = Integer.parseInt(cursor_Android_Contacts.getString(cursor_Android_Contacts.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)));
+if (hasPhoneNumber > 0) {
+
+Cursor phoneCursor = contentResolver.query(
+ContactsContract.CommonDataKinds.Phone.CONTENT_URI
+, null
+, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?"
+, new String[]{contact_id}
+, null);
+
+while (phoneCursor.moveToNext()) {
+String phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+//< set >
+android_contact.android_contact_TelefonNr = phoneNumber;
+//</ set >
+}
+phoneCursor.close();
+}
+//----</ set >----
+//----</ get phone number >----
+
+// Add the contact to the ArrayList
+arrayList_Android_Contacts.add(android_contact);
+}
+//----</ @Loop: all Contacts >----
+
+//< show results >
+Adapter_for_Android_Contacts adapter = new Adapter_for_Android_Contacts(this, arrayList_Android_Contacts);
+listView_Android_Contacts.setAdapter(adapter);
+//</ show results >
